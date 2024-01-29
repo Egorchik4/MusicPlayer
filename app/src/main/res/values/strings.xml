@@ -1,3 +1,12 @@
 <resources>
 	<string name="app_name">MusicPlayer</string>
+	<string name="name_of_screen">Ваши записи</string>
+	<string name="content_description"/>
+	<string name="textNameAudio">Крутой трек</string>
+	<string name="textData">14.02.2022 в 10:43</string>
+	<string name="textTime">2:34</string>
+	<string name="textTimeActual">1:23</string>
+	<string name="textSlash">/</string>
+	<string name="audioPlayer">AudioPlayer</string>
+	<string name="choose_audio_folder">Choose Audio Folder</string>
 </resources>
