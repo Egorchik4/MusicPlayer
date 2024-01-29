@@ -1,6 +1,5 @@
 package com.example.musicplayer.presentation
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,7 +14,6 @@ import com.example.musicplayer.presentation.state.AudioState
 import com.example.musicplayer.ui.MainActivity.Companion.KEY_SHARED_PREFERENCES
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +24,11 @@ class MainViewModel @Inject constructor(
 	private val audioPlayerUseCase: AudioPlayerUseCase
 ) : ViewModel() {
 
+	companion object {
+
+		const val EMPTY_PATH_AUDIO = "null"
+	}
+
 	private val _musicMut = MutableLiveData<AudioState>()
 	val musicLive: LiveData<AudioState> = _musicMut
 
@@ -33,8 +36,9 @@ class MainViewModel @Inject constructor(
 	private var musicListSize = 0
 	private lateinit var musicListStop: List<AudioItemState>
 
-	fun saveMusicFolder(pathAudio: String) {
-		if (pathAudio != "null") {
+	fun saveMusicFolder(pathAudio: String?) {
+		if (!pathAudio.isNullOrEmpty() && pathAudio != EMPTY_PATH_AUDIO) {
+			audioPlayerUseCase.startService()
 			putInSharedPreferencesUseCase(KEY_SHARED_PREFERENCES, pathAudio)
 			val list = audioPlayerUseCase.getAudioList(pathAudio)
 			musicListStop = list
@@ -50,6 +54,7 @@ class MainViewModel @Inject constructor(
 			is AudioItemState.PlayItem -> {
 				stopAudio()
 			}
+
 			is AudioItemState.StopItem -> {
 				val position = musicListStop.indexOf(audioItemState)
 				playAudio(audioItemState.audioEntity, position)
@@ -59,12 +64,12 @@ class MainViewModel @Inject constructor(
 
 	private fun changeData(audioEntity: AudioEntity, position: Int) {
 		val newList = ArrayList(musicListStop)
-		if(audioEntity.actualDurationInt != 0){
+		if (audioEntity.actualDurationInt != 0) {
 			newList[position] = AudioItemState.PlayItem(audioEntity)
 			_musicMut.postValue(
 				AudioState.Content(enableButton = true, list = newList)
 			)
-		}else{
+		} else {
 			_musicMut.postValue(
 				AudioState.Content(enableButton = false, list = newList)
 			)
@@ -72,10 +77,8 @@ class MainViewModel @Inject constructor(
 	}
 
 	fun playAudio(audioEntity: AudioEntity = audioPlayerUseCase.getActualAudio(0), position: Int = 0) {
-		Log.e("eee", "playAudio $audioEntity")
 		viewModelScope.launch(Dispatchers.IO) {
 			audioPlayerUseCase.playAudio(audioEntity) {
-				Log.e("eee", "duration: $it")
 				changeData(
 					audioEntity = audioEntity.copy(
 						actualDuration = it.toTimeFormat(),
@@ -92,20 +95,18 @@ class MainViewModel @Inject constructor(
 	}
 
 	fun nextAudio() {
-		stopAudio()
 		currentMusicPosition += 1
 		if (currentMusicPosition > musicListSize - 1) currentMusicPosition = 0
-		playAudio(audioPlayerUseCase.getActualAudio(currentMusicPosition))
+		playAudio(audioPlayerUseCase.getActualAudio(currentMusicPosition), currentMusicPosition)
 	}
 
 	fun previousAudio() {
-		stopAudio()
 		currentMusicPosition -= 1
 		if (currentMusicPosition < 0) currentMusicPosition = musicListSize - 1
-		playAudio(audioPlayerUseCase.getActualAudio(currentMusicPosition))
+		playAudio(audioPlayerUseCase.getActualAudio(currentMusicPosition), currentMusicPosition)
 	}
 
 	init {
-		saveMusicFolder(getOfInSharedPreferencesUseCase(KEY_SHARED_PREFERENCES)!!)
+		saveMusicFolder(getOfInSharedPreferencesUseCase(KEY_SHARED_PREFERENCES))
 	}
 }
