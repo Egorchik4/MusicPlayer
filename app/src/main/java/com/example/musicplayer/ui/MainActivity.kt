@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
 	private val getMusicFileContract = registerForActivityResult(ActivityResultContracts.GetContent()) {
 		try {
 			if (it != null) {
-				viewModel.saveMusicFolder(it.toString())
+				viewModel.saveMusicFolder(it.toString().substringBeforeLast('/'))
 			}
 		} catch (e: Exception) {
 			showMessage(e.toString())

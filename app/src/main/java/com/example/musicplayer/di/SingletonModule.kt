@@ -48,8 +48,8 @@ class SingletonModule {
 
 	@Provides
 	@Singleton
-	fun provideDataSource(mmr: MediaMetadataRetriever): AudioDataSource {
-		return AudioDataSourceImpl(mmr)
+	fun provideDataSource(@ApplicationContext context: Context, mmr: MediaMetadataRetriever): AudioDataSource {
+		return AudioDataSourceImpl(context, mmr)
 	}
 
 	@Provides
